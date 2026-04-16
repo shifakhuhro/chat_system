@@ -8,11 +8,11 @@ PROJECT DESCRIPTION:
 This project is a Chat System Database that allows users to send messages, join chat rooms, and manage attachments.
 
 TOOLS USED:
-- MySQL
 - Python (Streamlit)
+- sqllite3
 
 DATABASE FILE:
-ChatSystem.sql
+db.py
 
 HOW TO RUN:
 1. Import ChatSystem.sql into MySQL
