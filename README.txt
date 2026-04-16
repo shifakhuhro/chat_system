@@ -1,6 +1,5 @@
 CHAT SYSTEM DATABASE PROJECT
 streamlit
-mysql-connector-python
 Subject: Database Management System 
 
 Student Name: Shifa Munir
