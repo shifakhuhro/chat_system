@@ -1,7 +1,44 @@
 import streamlit as st
 import sqlite3
 from datetime import datetime
+st.subheader("📊 Advanced Dashboard")
 
+# Total messages
+total = cursor.execute("SELECT COUNT(*) FROM messages").fetchone()[0]
+st.metric("Total Messages", total)
+
+# Read messages
+read = cursor.execute("""
+SELECT COUNT(*) FROM messages WHERE message_status='Read'
+""").fetchone()[0]
+st.metric("Read Messages", read)
+
+# Messages per sender
+sender_data = cursor.execute("""
+SELECT sender_id, COUNT(*) FROM messages GROUP BY sender_id
+""").fetchall()
+
+st.write("Messages per Sender")
+st.bar_chart({f"User {s[0]}": s[1] for s in sender_data})
+
+# Messages per receiver
+receiver_data = cursor.execute("""
+SELECT receiver_id, COUNT(*) 
+FROM chats 
+GROUP BY receiver_id
+""").fetchall()
+
+st.write("Chats per Receiver")
+st.bar_chart({f"User {r[0]}": r[1] for r in receiver_data})
+
+# Attachment types (simulate if empty)
+attachments = cursor.execute("""
+SELECT file_type, COUNT(*) FROM attachments GROUP BY file_type
+""").fetchall() if True else []
+
+if attachments:
+    st.write("Attachment Types")
+    st.bar_chart({a[0]: a[1] for a in attachments})
 # ================= DATABASE SETUP =================
 conn = sqlite3.connect("chat.db", check_same_thread=False)
 cursor = conn.cursor()
