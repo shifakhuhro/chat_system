@@ -1,52 +1,67 @@
-# app.py
 import streamlit as st
-import mysql.connector
+import sqlite3
 
-# DB CONNECTION
-conn = mysql.connector.connect(
-    host="localhost",
-    user="root",
-    password="1234",
-    database="chat_system"
-) 
+conn = sqlite3.connect("chat.db", check_same_thread=False)
 cursor = conn.cursor()
 
-st.title("💬 Chat System")
+st.title("💬 Chat System Project")
 
-menu = st.sidebar.selectbox("Menu", ["Dashboard", "Users", "Messages"])
+menu = st.sidebar.selectbox(
+    "Menu",
+    ["Insert Message", "View Messages", "Update Message", "Delete Message", "Dashboard"]
+)
 
-# ---------------- DASHBOARD ----------------
-if menu == "Dashboard":
-    st.header("📊 Dashboard")
+# ================= INSERT =================
+if menu == "Insert Message":
+    sender = st.text_input("Sender")
+    receiver = st.text_input("Receiver")
+    message = st.text_area("Message")
 
-    cursor.execute("SELECT COUNT(*) FROM users")
-    st.write("Total Users:", cursor.fetchone()[0])
+    if st.button("Send"):
+        cursor.execute("""
+        INSERT INTO messages (chat_id, sender_id, message_text, timestamp, message_status)
+        VALUES (1, ?, ?, datetime('now'), 'Sent')
+        """, (sender, message))
+        conn.commit()
+        st.success("Message Sent!")
 
-    cursor.execute("SELECT COUNT(*) FROM messages")
-    st.write("Total Messages:", cursor.fetchone()[0])
+# ================= VIEW =================
+elif menu == "View Messages":
+    st.subheader("All Messages")
 
-    cursor.execute("SELECT COUNT(*) FROM messages WHERE message_status='Read'")
-    st.write("Read Messages:", cursor.fetchone()[0])
+    data = cursor.execute("SELECT * FROM messages").fetchall()
+    for row in data:
+        st.write(row)
 
-    cursor.execute("SELECT COUNT(*) FROM users WHERE status='Online'")
-    st.write("Online Users:", cursor.fetchone()[0])
+# ================= UPDATE =================
+elif menu == "Update Message":
+    msg_id = st.number_input("Message ID", min_value=1)
+    new_msg = st.text_area("New Message")
 
-    cursor.execute("SELECT file_type, COUNT(*) FROM attachments GROUP BY file_type")
-    st.write("Attachments by Type:")
-    st.write(cursor.fetchall())
+    if st.button("Update"):
+        cursor.execute("UPDATE messages SET message_text=? WHERE message_id=?",
+                       (new_msg, msg_id))
+        conn.commit()
+        st.success("Updated!")
 
-# ---------------- USERS ----------------
-elif menu == "Users":
-    st.header("👤 Users")
+# ================= DELETE =================
+elif menu == "Delete Message":
+    msg_id = st.number_input("Message ID", min_value=1)
 
-    if st.button("Show Users"):
-        cursor.execute("SELECT * FROM users")
-        st.write(cursor.fetchall())
+    if st.button("Delete"):
+        cursor.execute("DELETE FROM messages WHERE message_id=?",
+                       (msg_id,))
+        conn.commit()
+        st.warning("Deleted!")
 
-# ---------------- MESSAGES ----------------
-elif menu == "Messages":
-    st.header("✉️ Messages")
+# ================= DASHBOARD =================
+elif menu == "Dashboard":
+    st.subheader("📊 User Stats")
 
-    if st.button("Show Messages"):
-        cursor.execute("SELECT * FROM messages")
-        st.write(cursor.fetchall())
+    stats = cursor.execute("""
+        SELECT sender_id, COUNT(*) FROM messages
+        GROUP BY sender_id
+    """).fetchall()
+
+    for s in stats:
+        st.write(f"User {s[0]} sent {s[1]} messages")
